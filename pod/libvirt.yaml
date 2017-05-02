@@ -2,11 +2,12 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: libvirt-ci
-  namespace: kube-system
   labels:
     role: libvirt
-    ci: jenkins
+    ci: k8s
 spec:
+  nodeSelector:
+    ci: k8s
   hostNetwork: True
   hostPID: True
   hostIPC: True
@@ -28,6 +29,17 @@ spec:
       mountPath: /etc/libvirt/qemu
     - name: libvirt-lib
       mountPath: /var/lib/libvirt
+  - name: add-br
+    image: lyanchih/libvirtd
+    tty: true
+    command:
+    - /bin/sh
+    - -c
+    - while brctl show kube0 2>&1 | grep 'No such'; do brctl addbr kube0; sleep 5; done; cat -;
+    securityContext:
+      capabilities:
+        add:
+        - NET_ADMIN
   volumes:
   - name: cgroup
     hostPath:
@@ -47,14 +59,3 @@ spec:
   - name: libvirt-xml
     hostPath:
       path: /etc/libvirt/qemu
-  - name: add-br
-    image: lyanchih/libvirtd
-    tty: true
-    command:
-    - /bin/sh
-    - -c
-    - while brctl show kube0 2>&1 | grep 'No such'; do brctl addbr kube0; sleep 5; done; cat -;
-    securityContext:
-      capabilities:
-        add:
-        - NET_ADMIN
