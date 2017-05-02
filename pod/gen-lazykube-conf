@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+CONF=$1
+
+[ -f "$CONF" ] || (echo "lazy ini file is not exist at $CONF" && exit 1)
+
+kubectl delete configmap lazykube-conf || true
+
+kubectl create configmap lazykube-conf --from-file=lazy.ini="$CONF"
