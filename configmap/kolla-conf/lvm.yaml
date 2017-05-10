@@ -1,0 +1,16 @@
+global:
+  kolla:
+    cinder:
+      volume_lvm:
+        all:
+          selector_key: kolla_lvm
+          selector_value: "true"
+    iscsid:
+      all:
+        selector_key: kolla_compute
+        selector_value: "true"
+    tgtd:
+      all:
+        selector_key: kolla_lvm
+        selector_value: "true"
+            

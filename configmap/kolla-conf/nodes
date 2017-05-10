@@ -1,0 +1,5 @@
+work1.example.com kolla_controller
+work1.example.com kolla_mariadb
+work2.example.com kolla_controller
+work3.example.com kolla_compute
+work4.example.com kolla_compute

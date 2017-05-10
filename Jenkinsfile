@@ -1,6 +1,8 @@
 podTemplate(label: 'k8s-ci', containers: [
     containerTemplate(name: 'dind', image: 'docker:dind', privileged: true,
                       args: '--mtu 1400'),
+    containerTemplate(name: 'kolla-k8s', image: 'lyanchih/kolla-k8s, ttyEnabled: true,
+                      command: 'cat'),
     containerTemplate(name: 'lazykube', image: 'lyanchih/lazykube', ttyEnabled: true, privileged: true,
         envVars: [
             containerEnvVar(key: 'DEBIAN_FRONTEND', value: 'noninteractive'),
@@ -13,22 +15,35 @@ podTemplate(label: 'k8s-ci', containers: [
         hostPathVolume(hostPath: '/data/.ssh', mountPath: '/home/jenkins/.ssh'),
         hostPathVolume(hostPath: '/var/run/libvirt', mountPath: '/var/run/libvirt'),
         emptyDirVolume(memory: false, mountPath: '/src'),
-        configMapVolume(mountPath: '/etc/lazykube', configMapName: 'lazykube-conf')
+        emptyDirVolume(memory: false, mountPath: '/home/jenkins/.kube'),
+        configMapVolume(mountPath: '/etc/lazykube', configMapName: 'lazykube-conf'),
+        configMapVolume(mountPath: '/etc/kolla', configMapName: 'kolla-conf'),
     ], nodeSelector: 'ci=k8s') {
 
     node ('k8s-ci') {
 
+         stage 'Deploy kubernetes'
          container('lazykube') {
-             stage 'Downloading kubectl'
-             sh 'curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x ./kubectl'
+             sh 'curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x ./kubectl && cp ./kubectl /usr/bin/kubectl'
 
              stage 'Waiting for kubectl config'
              sh 'while true; do sleep 5; [ -f ~/.kube/config ] && break || continue; done; echo "k8s config had been created"'
 
              stage 'Waiting for k8s deploying'
-             sh 'while true; do sleep 5; ./kubectl --server https://172.17.20.100 get pods && break || continue; done'
+             sh 'while true; do sleep 5; kubectl --server https://172.17.20.100 get pods && break || continue; done'
+         }
 
-             stage 'Destroy k8s cluster'
+         stage 'Deploy openstack'
+         container('kolla-k8s') {
+             sh '/entrypoint.sh prepare'
+
+             sh '/entrypoint.sh deploy'
+
+             sh '/entrypoint.sh test'
+         }
+
+         stage 'Destroy k8s cluster'
+         container('lazykube') {
              sh 'cd /src/LazyKube && ./scripts/libvirt destroy'
          }
     }

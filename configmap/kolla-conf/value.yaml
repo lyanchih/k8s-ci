@@ -1,0 +1,28 @@
+orchestration_engine: KUBERNETES
+node_config_directory: /opt/stack/etc/kolla
+kolla_internal_address: 192.168.199.10
+nova_logging_debug: true
+kolla_kubernetes_external_vip: "172.17.0.100"
+kolla_install_type: source
+
+##############################
+# Kolla Kubernetes labels
+##############################
+
+##############################
+# Database variable
+##############################
+nova_database_address: mariadb
+nova_api_database_address: mariadb
+cinder_database_address: mariadb
+glance_database_address: mariadb
+heat_database_address: mariadb
+neutron_database_address: mariadb
+ironic_database_address: mariadb
+ironic_inspector_database_address: mariadb
+
+############################
+# Cinder LVM variables
+############################
+# enable_cinder_backend_lvm: true
+# cinder_volume_group: cinder-volumes

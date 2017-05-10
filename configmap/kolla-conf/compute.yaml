@@ -1,0 +1,6 @@
+global:
+  kolla:
+    all:
+      selector_key: kolla_compute
+      selector_value: true
+type: compute

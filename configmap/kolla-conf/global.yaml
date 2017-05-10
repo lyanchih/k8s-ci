@@ -1,0 +1,21 @@
+global:
+  kolla:
+    all:
+      tunnel_interface: eth1
+      external_vip: 172.17.0.100
+      haproxy_python_termination: false
+      kube_logger: false
+      image_tag: 51e94df0620e
+      fluentd_image_tag: 51e94df0620e
+      kolla_toolbox_image_tag: 51e94df0620e
+      kubernetes_entrypoint_image_tag: 51e94df0620e
+      docker_registry: 172.22.118.200:5000
+      install_type: source
+      base_distro: centos
+    mariadb:
+      all:
+        selector_key: kolla_mariadb
+        selector_value: true
+    openvswitch:
+      all:
+        ext_interface_name: eth0
