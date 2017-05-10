@@ -2,7 +2,7 @@ global:
   kolla:
     all:
       tunnel_interface: eth1
-      external_vip: 172.17.0.100
+      external_vip: 172.17.20.100
       haproxy_python_termination: false
       kube_logger: false
       image_tag: 51e94df0620e

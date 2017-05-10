@@ -2,7 +2,7 @@ orchestration_engine: KUBERNETES
 node_config_directory: /opt/stack/etc/kolla
 kolla_internal_address: 192.168.199.10
 nova_logging_debug: true
-kolla_kubernetes_external_vip: "172.17.0.100"
+kolla_kubernetes_external_vip: "172.17.20.100"
 kolla_install_type: source
 
 ##############################
