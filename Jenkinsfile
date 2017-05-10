@@ -1,7 +1,7 @@
 podTemplate(label: 'k8s-ci', containers: [
     containerTemplate(name: 'dind', image: 'docker:dind', privileged: true,
                       args: '--mtu 1400'),
-    containerTemplate(name: 'kolla-k8s', image: 'lyanchih/kolla-k8s, ttyEnabled: true,
+    containerTemplate(name: 'kolla-k8s', image: 'lyanchih/kolla-k8s', ttyEnabled: true,
                       command: 'cat'),
     containerTemplate(name: 'lazykube', image: 'lyanchih/lazykube', ttyEnabled: true, privileged: true,
         envVars: [
