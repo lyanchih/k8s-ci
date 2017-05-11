@@ -38,7 +38,7 @@ function prepare() {
     
     if [ ! -f "/etc/kolla/passwords.yml" ]; then
         git clone http://github.com/openstack/kolla-ansible
-        ln -T kolla-ansible/etc/kolla/passwords.yml /etc/kolla/passwords.yml
+        cp kolla-ansible/etc/kolla/passwords.yml /etc/kolla/passwords.yml
     fi
 
     cd kolla-kubernetes
