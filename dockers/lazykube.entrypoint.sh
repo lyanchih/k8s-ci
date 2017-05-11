@@ -12,6 +12,8 @@ cd LazyKube
 
 [ -f "/etc/lazykube/lazy.ini" ] && cp /etc/lazykube/lazy.ini etc/lazy.ini
 
+./scripts/libvirt destroy || true
+
 ./scripts/deploy || true
 
 cat -
