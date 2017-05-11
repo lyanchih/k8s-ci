@@ -2,7 +2,9 @@ podTemplate(label: 'k8s-ci', containers: [
     containerTemplate(name: 'dind', image: 'docker:dind', privileged: true,
                       args: '--mtu 1400'),
     containerTemplate(name: 'kolla-k8s', image: 'lyanchih/kolla-k8s', ttyEnabled: true,
-                      command: 'cat'),
+                      command: 'cat', envVars: [
+            containerEnvVar(key: 'KOLLA_CONFIG_DIRECTORY', value: '/data/kolla')
+        ]),
     containerTemplate(name: 'lazykube', image: 'lyanchih/lazykube', ttyEnabled: true, privileged: true,
         envVars: [
             containerEnvVar(key: 'DEBIAN_FRONTEND', value: 'noninteractive'),
@@ -17,7 +19,7 @@ podTemplate(label: 'k8s-ci', containers: [
         emptyDirVolume(memory: false, mountPath: '/src'),
         emptyDirVolume(memory: false, mountPath: '/home/jenkins/.kube'),
         configMapVolume(mountPath: '/etc/lazykube', configMapName: 'lazykube-conf'),
-        configMapVolume(mountPath: '/etc/kolla', configMapName: 'kolla-conf'),
+        configMapVolume(mountPath: '/data/kolla', configMapName: 'kolla-conf'),
     ], nodeSelector: 'ci=k8s') {
 
     node ('k8s-ci') {

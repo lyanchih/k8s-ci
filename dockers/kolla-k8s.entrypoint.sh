@@ -3,7 +3,7 @@
 set -e
 
 KOLLA_CONFIG_DIRECTORY=${KOLLA_CONFIG_DIRECTORY:=/etc/kolla}
-KOLLA_K8S_VALUE=${KOLLA_K8S_VALUE:=value.yml}
+KOLLA_K8S_VALUE=${KOLLA_K8S_VALUE:=value.yaml}
 NODE_CONFIG_DIRECTORY=${NODE_CONFIG_DIRECTORY:=/etc/kolla}
 
 if [ -f "$KOLLA_CONFIG_DIRECTORY/$KOLLA_K8S_VALUE" ]; then
@@ -47,7 +47,7 @@ function prepare() {
     tools/generate_passwords.py
 
     echo "Generate openstack service config"
-    ansible-playbook -e @/etc/kolla/passwords.yml -e @etc/kolla-kubernetes/kolla-kubernetes.yml $([ -f "/etc/kolla/$KOLLA_K8S_VALUE" ] && echo "-e @/etc/kolla/$KOLLA_K8S_VALUE") ansible/site.yml
+    ansible-playbook -e @/etc/kolla/passwords.yml -e @etc/kolla-kubernetes/kolla-kubernetes.yml $([ -f "$KOLLA_CONFIG_DIRECTORY/$KOLLA_K8S_VALUE" ] && echo "-e @$KOLLA_CONFIG_DIRECTORY/$KOLLA_K8S_VALUE") ansible/site.yml
 
     sed -i '/innodb_buffer_pool_size = /d' $NODE_CONFIG_DIRECTORY/mariadb/galera.cnf
 
@@ -84,8 +84,8 @@ function prepare() {
 function deploy() {
     tools/wait_for_pods.sh
 
-    if [ -f "/etc/kolla/nodes" ]; then
-        awk '{printf "kubectl label node %s %s=true\n",$1,$2}' /etc/kolla/nodes | bash
+    if [ -f "$KOLLA_CONFIG_DIRECTORY/nodes" ]; then
+        awk '{printf "kubectl label node %s %s=true\n",$1,$2}' $KOLLA_CONFIG_DIRECTORY/nodes | bash
     else
         kubectl label node work1 kolla_mariadb=true
         kubectl label node work1 kolla_controller=true
