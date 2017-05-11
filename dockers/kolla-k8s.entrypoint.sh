@@ -7,7 +7,7 @@ KOLLA_K8S_VALUE=${KOLLA_K8S_VALUE:=value.yaml}
 NODE_CONFIG_DIRECTORY=${NODE_CONFIG_DIRECTORY:=/etc/kolla}
 
 if [ -f "$KOLLA_CONFIG_DIRECTORY/$KOLLA_K8S_VALUE" ]; then
-    NODE_CONFIG_DIRECTORY="$(crudini --get /etc/kolla/$KOLLA_K8S_VALUE DEFAULT node_config_directory)"
+    NODE_CONFIG_DIRECTORY="$(crudini --get $KOLLA_CONFIG_DIRECTORY/$KOLLA_K8S_VALUE DEFAULT node_config_directory)"
 fi
 
 function usage() {
