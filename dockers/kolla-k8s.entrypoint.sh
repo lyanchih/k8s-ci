@@ -21,6 +21,14 @@ test      Test openstack
 EOF
 }
 
+function clone_cd_kolla_kubernetes() {
+    cd ~
+    if [ ! -d 'kolla-kubernetes' ]; then
+        git clone http://github.com/openstack/kolla-kubernetes
+    fi
+    cd kolla-kubernetes
+}
+
 function download_kubectl() {
     echo "Finding latest kubectl"
     # curl -s https://github.com/kubernetes/kubernetes/releases/latest  | awk -F '[<>]' '/.*/ { match($0, "tag/([^\"]+)",a); print a[1] }'
@@ -32,7 +40,7 @@ function download_kubectl() {
 }
 
 function prepare() {
-    git clone http://github.com/openstack/kolla-kubernetes
+    clone_cd_kolla_kubernetes
     
     [ -d "/etc/kolla" ] || mkdir /etc/kolla
     
@@ -41,7 +49,6 @@ function prepare() {
         cp kolla-ansible/etc/kolla/passwords.yml /etc/kolla/passwords.yml
     fi
 
-    cd kolla-kubernetes
     pip install .
     echo "Generate openstack password"
     tools/generate_passwords.py
@@ -54,7 +61,12 @@ function prepare() {
     echo "Download kubectl"
     download_kubectl
 
-    tools/wait_for_pods.sh
+    echo "Show kubectl config"
+    kubectl config view
+
+    tools/wait_for_pods.sh kolla
+
+    kubectl create namespace kolla || true
     
     echo "Generate k8s configmap"
     cd $NODE_CONFIG_DIRECTORY
@@ -78,13 +90,27 @@ function prepare() {
 
     sleep 2
 
+    helm init || true
+
     tools/helm_build_all.sh ./tmp
 }
 
 function deploy() {
-    tools/wait_for_pods.sh
+    clone_cd_kolla_kubernetes
+
+    tools/wait_for_pods.sh kolla
 
     if [ -f "$KOLLA_CONFIG_DIRECTORY/nodes" ]; then
+        kubectl get nodes
+        nodes=$(kubectl get nodes --no-headers | awk '{if ($2!="Ready") print $1}')
+        while [ ! -z "$nodes" ]; do
+            for n in $nodes; do
+                echo "Waiting $n node to ready"
+            done
+            sleep 5
+            nodes=$(kubectl get nodes --no-headers | awk '{if ($2!="Ready") print $1}')
+            kubectl get nodes
+        done
         awk '{printf "kubectl label node %s %s=true\n",$1,$2}' $KOLLA_CONFIG_DIRECTORY/nodes | bash
     else
         kubectl label node work1 kolla_mariadb=true
@@ -95,35 +121,42 @@ function deploy() {
     cd helm
     echo "Deploy controller node service"
     for s in mariadb rabbitmq memcached keystone horizon nova-control glance openvswitch neutron cinder-control; do
+        echo "Install service $s"
         helm install -f $KOLLA_CONFIG_DIRECTORY/global.yaml service/$s
         sleep 5
     done
     
-    while ! tools/wait_for_pods.sh; do
+    while ! ../tools/wait_for_pods.sh kolla; do
         sleep 1
     done
 
     echo "Deploy compute node service"
     helm install -f $KOLLA_CONFIG_DIRECTORY/global.yaml -f $KOLLA_CONFIG_DIRECTORY/compute.yaml microservice/neutron-openvswitch-agent-daemonset
     for s in openvswitch nova-compute; do
+        echo "Install service $s"
         helm install -f $KOLLA_CONFIG_DIRECTORY/global.yaml -f $KOLLA_CONFIG_DIRECTORY/compute.yaml service/$s
         sleep 5
     done
 
-    while ! tools/wait_for_pods.sh; do
+    while ! ../tools/wait_for_pods.sh kolla; do
         sleep 1
     done
 
-    helm install -f /opt/stack/etc/helm/global.yaml microservice/nova-cell0-create-db-job
-    helm install -f /opt/stack/etc/helm/global.yaml microservice/nova-api-create-simple-cell-job
+    helm install -f $KOLLA_CONFIG_DIRECTORY/global.yaml microservice/nova-cell0-create-db-job
+    helm install -f $KOLLA_CONFIG_DIRECTORY/global.yaml microservice/nova-api-create-simple-cell-job
 
-    while ! tools/wait_for_pods.sh; do
+    while ! ../tools/wait_for_pods.sh kolla; do
         sleep 1
     done
 }
 
 function test-openstack() {
-    true
+    clone_cd_kolla_kubernetes
+
+    tools/build_local_admin_keystonerc.sh
+
+    echo "Openstack openrc"
+    cat ~/keystonerc_admin
 }
 
 CMD=$1

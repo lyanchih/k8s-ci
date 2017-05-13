@@ -31,8 +31,11 @@ podTemplate(label: 'k8s-ci', containers: [
              stage 'Waiting for kubectl config'
              sh 'while true; do sleep 5; [ -f ~/.kube/config ] && break || continue; done; echo "k8s config had been created"'
 
+             stage 'Change kubectl config server IP and show config'
+             sh 'kubectl config set-cluster k8s --server=https://172.17.20.100 && kubectl config view'
+
              stage 'Waiting for k8s deploying'
-             sh 'while true; do sleep 5; kubectl --server https://172.17.20.100 get pods && break || continue; done'
+             sh 'while true; do sleep 5; kubectl get pods && break || continue; done'
          }
 
          stage 'Deploy openstack'
